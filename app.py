@@ -1,7 +1,6 @@
-
-import yfinance as yf
 import numpy as np
 import pandas as pd
+import yfinance as yf
 from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
