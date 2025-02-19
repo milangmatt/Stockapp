@@ -1,6 +1,18 @@
+import subprocess
+import sys
+
+def install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+try:
+    import yfinance as yf
+except ImportError:
+    install_package('yfinance')
+    import yfinance as yf
+
 import numpy as np
 import pandas as pd
-import yfinance as yf
+
 from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
