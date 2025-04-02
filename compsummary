@@ -1,0 +1,381 @@
+Phase 1: Analyzing all stocks...
+
+Running analysis with the following parameters:
+Start Date: 2024-04-01
+End Date: 2025-04-01
+Correlation Threshold: 0.75
+Maximum Lag: 10
+Target Stock: HDFCBANK.NS
+--------------------------------------------------
+Downloading stock data (this may take a few minutes)...
+Downloading stock data (this may take a few minutes)...
+YF.download() has changed argument auto_adjust default to True
+Calculating correlations between stocks...
+
+==================================================
+Processing HDFCBANK.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing ICICIBANK.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing KOTAKBANK.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing AXISBANK.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing MARUTI.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing TATAMOTORS.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing TCS.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing INFY.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing WIPRO.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing HCLTECH.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing HINDUNILVR.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing ITC.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing NESTLEIND.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing BRITANNIA.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing RELIANCE.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing NTPC.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing TATAPOWER.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+==================================================
+Processing TITAN.NS
+==================================================
+
+Training LSTM model...
+
+Training XGBoost model...
+
+Generating comparison plots and summary...
+
+Detailed Results Summary
+================================================================================
+Stock        Model    Overall RMSE    Overall MAPE    Avg CV RMSE     Avg CV MAPE     Time (s)
+
+--------------------------------------------------------------------------------
+HDFCBANK.NS  LSTM     17.6265         0.8319          83.4815         4.0440          5.81    
+
+             XGBoost  2.1054          0.0944          63.6898         3.1347          0.31    
+
+--------------------------------------------------------------------------------
+ICICIBANK.NS LSTM     16.4915         1.0486          67.3055         4.8519          4.32    
+
+             XGBoost  1.4262          0.0874          57.1196         3.9610          0.28    
+
+--------------------------------------------------------------------------------
+KOTAKBANK.NS LSTM     28.6189         1.1422          92.5617         4.1444          3.59    
+
+             XGBoost  3.1778          0.1205          87.4654         3.8520          0.20    
+
+--------------------------------------------------------------------------------
+AXISBANK.NS  LSTM     15.5381         1.0375          47.3254         3.5926          4.41    
+
+             XGBoost  1.3428          0.0875          47.2066         3.3752          0.27    
+
+--------------------------------------------------------------------------------
+MARUTI.NS    LSTM     226.3322        1.4302          409.3965        2.6519          4.84    
+
+             XGBoost  22.6888         0.1190          499.3446        3.4580          0.21    
+
+--------------------------------------------------------------------------------
+TATAMOTORS.NS LSTM     21.8177         1.8961          70.0643         7.4340          3.89   
+
+             XGBoost  1.1123          0.0992          80.1600         8.3777          0.29    
+
+--------------------------------------------------------------------------------
+TCS.NS       LSTM     67.7947         1.3023          228.1303        4.8708          4.32    
+
+             XGBoost  5.1052          0.0942          194.8361        3.9755          0.27    
+
+--------------------------------------------------------------------------------
+INFY.NS      LSTM     28.1131         1.2260          133.8003        6.7971          4.30    
+
+             XGBoost  2.0260          0.0832          100.4322        4.7982          0.28    
+
+--------------------------------------------------------------------------------
+WIPRO.NS     LSTM     3.7907          1.1089          24.6012         7.7469          5.45    
+
+             XGBoost  0.3868          0.1115          15.9117         5.0492          0.30    
+
+--------------------------------------------------------------------------------
+HCLTECH.NS   LSTM     37.7779         1.7327          135.1442        7.2668          3.05    
+
+             XGBoost  1.7069          0.0782          106.0023        5.6884          0.26    
+
+--------------------------------------------------------------------------------
+HINDUNILVR.NS LSTM     37.0925         1.1093          157.5696        5.1992          2.30   
+
+             XGBoost  2.9470          0.0862          120.0931        3.8213          0.23    
+
+--------------------------------------------------------------------------------
+ITC.NS       LSTM     5.1369          0.8464          24.1688         4.3870          2.39    
+
+             XGBoost  0.4743          0.0815          18.9605         3.3264          0.26    
+
+--------------------------------------------------------------------------------
+NESTLEIND.NS LSTM     26.2785         0.8328          79.4130         2.5939          2.32    
+
+             XGBoost  2.3775          0.0721          79.1580         2.7721          0.24    
+
+--------------------------------------------------------------------------------
+BRITANNIA.NS LSTM     74.2623         1.0670          315.4765        4.8638          2.72    
+
+             XGBoost  7.1904          0.1019          260.1375        3.7278          0.23    
+
+--------------------------------------------------------------------------------
+RELIANCE.NS  LSTM     16.8194         0.9372          74.1459         4.8109          2.81    
+
+             XGBoost  1.7566          0.0937          75.2895         4.9020          0.26    
+
+--------------------------------------------------------------------------------
+NTPC.NS      LSTM     6.0362          1.2183          21.6827         4.9363          2.94    
+
+             XGBoost  0.6701          0.1334          18.3195         4.1366          0.24    
+
+--------------------------------------------------------------------------------
+TATAPOWER.NS LSTM     6.3595          1.1653          19.8593         4.0094          2.89    
+
+             XGBoost  0.7801          0.1421          21.8961         4.4682          0.25    
+
+--------------------------------------------------------------------------------
+TITAN.NS     LSTM     37.3889         0.8701          153.5111        4.1249          2.39    
+
+             XGBoost  5.8206          0.1227          118.5209        2.8642          0.22    
+
+--------------------------------------------------------------------------------
+
+Overall Model Performance
+==================================================
+
+LSTM Average Metrics:
+Overall RMSE        : 37.4042 ± 49.6406 ₹
+Overall MAPE        : 1.1557 ± 0.2847 %
+Average CV RMSE     : 118.7576 ± 102.9960 ₹
+Average CV MAPE     : 4.9070 ± 1.4695 %
+Training Time       : 3.5954 ± 1.0799 s
+
+XGB Average Metrics:
+Overall RMSE        : 3.5053 ± 5.0041 ₹
+Overall MAPE        : 0.1005 ± 0.0194 %
+Average CV RMSE     : 109.1413 ± 112.3840 ₹
+Average CV MAPE     : 4.2049 ± 1.2663 %
+Training Time       : 0.2555 ± 0.0296 s
+
+Plots have been saved as separate files:
+- comparison_overall_rmse.png
+- comparison_overall_mape.png
+- comparison_average_cv_rmse.png
+- comparison_average_cv_mape.png
+- comparison_training_time.png
+
+Phase 2: Running correlation analysis for ICICIBANK.NS...
+
+Testing correlation threshold: 0.05
+
+Testing correlation threshold: 0.10
+
+Testing correlation threshold: 0.15
+
+Testing correlation threshold: 0.20
+
+Testing correlation threshold: 0.25
+
+Testing correlation threshold: 0.30
+
+Testing correlation threshold: 0.35
+
+Testing correlation threshold: 0.40
+
+Testing correlation threshold: 0.45
+
+Testing correlation threshold: 0.50
+
+Testing correlation threshold: 0.55
+
+Testing correlation threshold: 0.60
+
+Testing correlation threshold: 0.65
+
+Testing correlation threshold: 0.70
+
+Testing correlation threshold: 0.75
+
+Testing correlation threshold: 0.80
+
+Testing correlation threshold: 0.85
+
+Testing correlation threshold: 0.90
+
+Testing correlation threshold: 0.95
+
+Phase 3: Running lag analysis for ICICIBANK.NS...
+
+Testing lag value: 1
+Completed lag 1: LSTM time = 3.45s, XGBoost time = 0.16s
+
+Testing lag value: 2
+Completed lag 2: LSTM time = 3.01s, XGBoost time = 0.14s
+
+Testing lag value: 3
+Completed lag 3: LSTM time = 3.66s, XGBoost time = 0.14s
+
+Testing lag value: 4
+Completed lag 4: LSTM time = 2.60s, XGBoost time = 0.15s
+
+Testing lag value: 5
+Completed lag 5: LSTM time = 2.99s, XGBoost time = 0.15s
+
+Testing lag value: 6
+Completed lag 6: LSTM time = 2.53s, XGBoost time = 0.15s
+
+Testing lag value: 7
+Completed lag 7: LSTM time = 2.82s, XGBoost time = 0.16s
+
+Testing lag value: 8
+Completed lag 8: LSTM time = 3.04s, XGBoost time = 0.16s
+
+Testing lag value: 9
+Completed lag 9: LSTM time = 2.98s, XGBoost time = 0.23s
+
+Testing lag value: 10
+Completed lag 10: LSTM time = 2.66s, XGBoost time = 0.25s
+
+Testing lag value: 11
+Completed lag 11: LSTM time = 3.42s, XGBoost time = 0.23s
+
+Testing lag value: 12
+Completed lag 12: LSTM time = 3.36s, XGBoost time = 0.26s
+
+Testing lag value: 13
+Completed lag 13: LSTM time = 2.79s, XGBoost time = 0.24s
+
+Testing lag value: 14
+Completed lag 14: LSTM time = 2.47s, XGBoost time = 0.25s
+
+Testing lag value: 15
+Completed lag 15: LSTM time = 2.40s, XGBoost time = 0.25s
+
+Testing lag value: 16
+Completed lag 16: LSTM time = 3.08s, XGBoost time = 0.25s
+
+Testing lag value: 17
+Completed lag 17: LSTM time = 2.55s, XGBoost time = 0.25s
+
+Testing lag value: 18
+Completed lag 18: LSTM time = 2.70s, XGBoost time = 0.26s
+
+Testing lag value: 19
+Completed lag 19: LSTM time = 2.71s, XGBoost time = 0.26s
+
+Testing lag value: 20
+Completed lag 20: LSTM time = 2.73s, XGBoost time = 0.27s

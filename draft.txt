@@ -1,0 +1,48 @@
+1. User Input
+
+    Users interact with a Streamlit-based UI to:
+        Select stock symbols.
+        Specify a date range.
+        Upload datasets if needed.
+
+2. Data Retrieval & Preprocessing
+
+    Fetching Data: Uses yfinance to download stock prices (Open, High, Low, Close, Volume).
+    Data Cleaning:
+        Handles missing values using forward and backward filling.
+        Aligns stock data for multiple tickers.
+    Feature Scaling: Uses StandardScaler to normalize numerical features.
+
+3. Feature Engineering (Implemented in Code)
+
+    Lagged Features: Creates shifted versions of closing prices (Close_t-1, Close_t-2).
+    Rolling Statistics: Computes moving averages and standard deviations over fixed windows.
+    Lagged Correlation Analysis: Identifies leading and lagging stock relationships.
+
+4. Machine Learning Model (XGBoost with Time-Series Cross-Validation)
+
+    Model Selection: Uses XGBoost, a gradient boosting model for time-series forecasting.
+    Time-Series Splitting:
+        Uses TimeSeriesSplit instead of a fixed 80%-20% train-test split.
+        Ensures the model trains on past data and tests on future data.
+    Boosting Process in XGBoost:
+        The model builds 100 sequential decision trees, where each new tree corrects the previous one’s errors.
+        It minimizes residual errors using gradient boosting, adjusting predictions step-by-step.
+    Hyperparameter Tuning: Optimizes learning rate, max depth, and number of estimators.
+    Performance Evaluation:
+        RMSE (Root Mean Squared Error)
+        MAPE (Mean Absolute Percentage Error)
+
+5. Prediction & Visualization
+
+    Generates Predictions: The trained XGBoost model forecasts stock prices.
+    Visualization Tools:
+        Actual vs. Predicted Prices (Line chart).
+        Feature Importance Analysis (Bar chart).
+        Correlation Heatmaps (For multi-stock relationships).
+
+6. Deployment & User Interaction
+
+    Streamlit-Based UI:
+        Allows users to input stock tickers, view analysis, and receive real-time forecasts.
+        Provides interactive correlation heatmaps and stock trend insights.

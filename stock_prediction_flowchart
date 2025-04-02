@@ -1,0 +1,25 @@
+digraph {
+	A [label="📊 Input: Stock Data" fillcolor="#A7C7E7" shape=box style=filled]
+	B1 [label="📑 Lagged Correlation Analysis" fillcolor="#90EE90" shape=box style=filled]
+	B2 [label="📑 Data Imputation for Missing Prices" fillcolor="#FFB6C1" shape=box style=filled]
+	C1 [label="📑 Feature Engineering" fillcolor="#90EE90" shape=box style=filled]
+	C2 [label="📑 Cleaned Data" fillcolor="#FFB6C1" shape=box style=filled]
+	D1 [label="📑 Data Preparation" fillcolor="#FFB6C1" shape=box style=filled]
+	D2 [label="📑 Stock Trend Visualization" fillcolor="#D3D3D3" shape=box style=filled]
+	E [label="📑 XGBoost Model Training" fillcolor="#FFB6C1" shape=box style=filled]
+	F [label="⚙️ Optimized XGBoost Model" fillcolor="#D3D3D3" shape=box style=filled]
+	G [label="📑 Stock Price Prediction" fillcolor="#ADD8E6" shape=box style=filled]
+	H [label="📑 Performance Evaluation" fillcolor="#FFFF99" shape=box style=filled]
+	I [label="📑 Evaluation Results" fillcolor="#FFFF99" shape=box style=filled]
+	A -> B1 [label="Lagged Correlation"]
+	A -> B2
+	B1 -> C1 [label="Feature Matrix"]
+	B2 -> C2 [label="Fill Missing Values"]
+	C1 -> D1 [label="Train-Test Split"]
+	C2 -> D2 [label="Visualize Trends"]
+	D1 -> E
+	E -> F [label="Hyperparameter Tuning"]
+	F -> G [label="Predict Future Prices"]
+	G -> H
+	H -> I [label="Metrics: RMSE, MAPE"]
+}

@@ -5,14 +5,16 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import root_mean_squared_error, mean_absolute_percentage_error
-import xgboost as xgb
 import streamlit as st
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import time
 import random
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 
 def fetch_stock_data_with_retry(tickers, start_date, end_date, max_retries=3, batch_size=5):
     """
@@ -153,7 +155,7 @@ def validate_predictions(actual_prices, predicted_prices, stock_name):
     
     # Actual vs Predicted prices
     fig.add_trace(go.Scatter(y=actual_prices, name="Actual Price",
-                            line=dict(color='yellow')))
+                            line=dict(color='blue')))
     fig.add_trace(go.Scatter(y=predicted_prices, name="Predicted Price",
                             line=dict(color='red')))
     
@@ -184,7 +186,7 @@ def validate_predictions(actual_prices, predicted_prices, stock_name):
         "Directional Accuracy": f"{directional_accuracy:.2%}",
         "Within Bounds": f"{within_bounds:.2%}",
         "Error Percentiles": {
-            "5th": f"₹{error_percentiles[0]:.2f}",
+            "5th": f"₹{error_percentiles[0]::.2f}",
             "25th": f"₹{error_percentiles[1]:.2f}",
             "Median": f"₹{error_percentiles[2]:.2f}",
             "75th": f"₹{error_percentiles[3]:.2f}",
@@ -348,17 +350,57 @@ def display_backtest_results(backtest_results, investment, target_stock):
         else:
             st.text("No trades were executed during the backtest period")
 
+class TimeSeriesDataset(Dataset):
+    """Custom Dataset for PyTorch"""
+    def __init__(self, X, y):
+        self.X = torch.FloatTensor(X)
+        self.y = torch.FloatTensor(y)
+        
+    def __len__(self):
+        return len(self.X)
+        
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+class LSTMModel(nn.Module):
+    """PyTorch LSTM Model"""
+    def __init__(self, input_dim, hidden_dim=50, num_layers=2, dropout=0.2):
+        super(LSTMModel, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        
+        self.lstm = nn.LSTM(
+            input_dim,
+            hidden_dim,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout
+        )
+        
+        self.fc1 = nn.Linear(hidden_dim, 25)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(dropout)
+        self.fc2 = nn.Linear(25, 1)
+        
+    def forward(self, x):
+        lstm_out, _ = self.lstm(x)
+        last_output = lstm_out[:, -1, :]
+        out = self.fc1(last_output)
+        out = self.relu(out)
+        out = self.dropout(out)
+        out = self.fc2(out)
+        return out
+
 class StockPricePredictor:
     def __init__(self, correlation_threshold=0.5, max_lag=5):
         self.correlation_threshold = correlation_threshold
         self.max_lag = max_lag
-        self.scaler = StandardScaler()
-        self.model = xgb.XGBRegressor(
-            n_estimators=100,
-            learning_rate=0.1,
-            max_depth=5,
-            random_state=42
-        )
+        self.feature_scaler = StandardScaler()
+        self.target_scaler = MinMaxScaler()
+        self.model = None
+        self.sequence_length = max_lag
+        self.feature_names = None
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
     def create_features(self, data, target_stock):
         try:
@@ -402,6 +444,9 @@ class StockPricePredictor:
             y = y[:-1]  # Remove last row since we don't have next day's price
             X = features[:-1]  # Remove last row to match y
             
+            # Store feature names for later reference
+            self.feature_names = X.columns.tolist()
+            
             # Handle missing values in target
             mask = ~y.isna()
             y = y[mask]
@@ -411,6 +456,15 @@ class StockPricePredictor:
         except Exception as e:
             st.error(f"Error in prepare_data: {str(e)}")
             return None, None
+    
+    def create_sequences(self, X, y):
+        """Transform data into sequences for LSTM input"""
+        X_seq, y_seq = [], []
+        for i in range(len(X) - self.sequence_length):
+            X_seq.append(X[i:i+self.sequence_length])
+            y_seq.append(y[i+self.sequence_length])
+        
+        return np.array(X_seq), np.array(y_seq)
         
     def train(self, data, target_stock):
         try:
@@ -418,35 +472,151 @@ class StockPricePredictor:
             if X is None or y is None:
                 return None
                 
-            # Scale the features
-            X_scaled = self.scaler.fit_transform(X)
+            # Scale the features and target
+            X_scaled = self.feature_scaler.fit_transform(X)
+            y_scaled = self.target_scaler.fit_transform(y.values.reshape(-1, 1)).flatten()
             
             # Time series cross-validation
             tscv = TimeSeriesSplit(n_splits=5)
             scores_mse = []
             scores_mape = []
             
-            for train_idx, val_idx in tscv.split(X_scaled):
-                X_train, X_val = X_scaled[train_idx], X_scaled[val_idx]
-                y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+            # For storing feature importance
+            feature_importance = {feature: 1e-6 for feature in X.columns}
+            
+            # Create sequences
+            X_seq, y_seq = self.create_sequences(X_scaled, y_scaled)
+            
+            # Initialize the final model that will be used for predictions
+            self.model = LSTMModel(input_dim=X_seq.shape[2]).to(self.device)
+            
+            for train_idx, val_idx in tscv.split(X_seq):
+                X_train, X_val = X_seq[train_idx], X_seq[val_idx]
+                y_train, y_val = y_seq[train_idx], y_seq[val_idx]
                 
-                self.model.fit(X_train, y_train)
-                predictions = self.model.predict(X_val)
-                scores_mse.append(root_mean_squared_error(y_val, predictions))
-                scores_mape.append(mean_absolute_percentage_error(y_val, predictions))
+                # Create datasets and dataloaders
+                train_dataset = TimeSeriesDataset(X_train, y_train)
+                val_dataset = TimeSeriesDataset(X_val, y_val)
+                
+                train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+                val_loader = DataLoader(val_dataset, batch_size=32)
+                
+                # Create a fresh model for each fold
+                fold_model = LSTMModel(input_dim=X_train.shape[2]).to(self.device)
+                criterion = nn.MSELoss()
+                optimizer = torch.optim.Adam(fold_model.parameters(), lr=0.001)
+                
+                best_val_loss = float('inf')
+                patience = 10
+                patience_counter = 0
+                
+                # Training loop
+                for epoch in range(100):
+                    fold_model.train()  # Set to training mode
+                    train_loss = 0
+                    
+                    for batch_X, batch_y in train_loader:
+                        batch_X = batch_X.to(self.device)
+                        batch_y = batch_y.to(self.device)
+                        
+                        optimizer.zero_grad()
+                        outputs = fold_model(batch_X)
+                        loss = criterion(outputs.squeeze(), batch_y)
+                        loss.backward()
+                        optimizer.step()
+                        
+                        train_loss += loss.item()
+                    
+                    # Validation phase
+                    fold_model.eval()  # Set to evaluation mode
+                    val_loss = 0
+                    
+                    with torch.no_grad():
+                        for batch_X, batch_y in val_loader:
+                            batch_X = batch_X.to(self.device)
+                            batch_y = batch_y.to(self.device)
+                            outputs = fold_model(batch_X)
+                            val_loss += criterion(outputs.squeeze(), batch_y).item()
+                    
+                    val_loss /= len(val_loader)
+                    
+                    # Early stopping
+                    if val_loss < best_val_loss:
+                        best_val_loss = val_loss
+                        patience_counter = 0
+                        # Save best model weights for this fold
+                        best_state = fold_model.state_dict()
+                    else:
+                        patience_counter += 1
+                        if patience_counter >= patience:
+                            break
+                
+                # Evaluate the fold
+                fold_model.eval()
+                with torch.no_grad():
+                    val_predictions = fold_model(torch.FloatTensor(X_val).to(self.device))
+                    y_pred_scaled = val_predictions.cpu().numpy().flatten()
+                    y_pred = self.target_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+                    y_true = self.target_scaler.inverse_transform(y_val.reshape(-1, 1)).flatten()
+                
+                # Calculate metrics
+                scores_mse.append(root_mean_squared_error(y_true, y_pred))
+                scores_mape.append(mean_absolute_percentage_error(y_true, y_pred))
+                
+                # Update feature importance based on validation performance
+                val_loss = best_val_loss if 'best_val_loss' in locals() else float('inf')
+                importance_weight = 1.0 / (1.0 + val_loss)
+                for feature in X.columns:
+                    feature_importance[feature] += importance_weight
             
             # Train final model on all data
-            self.model.fit(X_scaled, y)
+            dataset = TimeSeriesDataset(X_seq, y_seq)
+            dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+            
+            criterion = nn.MSELoss()
+            optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+            
+            # Final training
+            for epoch in range(100):
+                self.model.train()
+                for batch_X, batch_y in dataloader:
+                    batch_X = batch_X.to(self.device)
+                    batch_y = batch_y.to(self.device)
+                    
+                    optimizer.zero_grad()
+                    outputs = self.model(batch_X)
+                    loss = criterion(outputs.squeeze(), batch_y)
+                    loss.backward()
+                    optimizer.step()
+            
+            # Generate predictions
+            self.model.eval()
+            with torch.no_grad():
+                X_tensor = torch.FloatTensor(X_seq).to(self.device)
+                predictions = self.model(X_tensor)
+                y_pred_scaled = predictions.cpu().numpy().flatten()
+                y_pred = self.target_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+            
+            # Normalize feature importance with safety check
+            total = sum(feature_importance.values())
+            if total > 0:
+                feature_importance = {k: v/total for k, v in feature_importance.items()}
+            else:
+                # If total is still 0, assign equal importance
+                n_features = len(feature_importance)
+                feature_importance = {k: 1.0/n_features for k in feature_importance.keys()}
             
             return {
                 'avg_rmse': np.mean(scores_mse),
                 'avg_mape': np.mean(scores_mape),
-                'feature_importance': dict(zip(X.columns, self.model.feature_importances_)),
-                'actual_values': y,
-                'predictions': self.model.predict(X_scaled)
+                'feature_importance': feature_importance,
+                'actual_values': y[self.sequence_length:],
+                'predictions': y_pred
             }
         except Exception as e:
             st.error(f"Error in training: {str(e)}")
+            import traceback
+            st.error(traceback.format_exc())
             return None
     
     def predict(self, data, target_stock):
@@ -454,9 +624,24 @@ class StockPricePredictor:
             X, _ = self.prepare_data(data, target_stock)
             if X is None:
                 return None
-            X_scaled = self.scaler.transform(X)
-            predictions = self.model.predict(X_scaled)
-            return predictions
+                
+            # Scale features
+            X_scaled = self.feature_scaler.transform(X)
+            
+            # Create sequences
+            X_seq = []
+            for i in range(len(X_scaled) - self.sequence_length):
+                X_seq.append(X_scaled[i:i+self.sequence_length])
+            X_seq = np.array(X_seq)
+            
+            # Make predictions
+            self.model.eval()
+            with torch.no_grad():
+                predictions = self.model(torch.FloatTensor(X_seq).to(self.device))
+                y_pred_scaled = predictions.cpu().numpy().flatten()
+                y_pred = self.target_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+            
+            return y_pred
         except Exception as e:
             st.error(f"Error in prediction: {str(e)}")
             return None
@@ -465,7 +650,7 @@ class StockPricePredictor:
 st.set_page_config(page_title="Stock Price Predictor", layout="wide")
 
 # Title and description
-st.title("Stock Price Prediction using Lagged Correlations Using XGBoost")
+st.title("Stock Price Prediction using Lagged Correlations Using LSTM")
 st.markdown("""
 This application predicts stock prices using machine learning and lagged correlations between different stocks.
 Select your parameters and target stock to start the prediction process.
@@ -505,7 +690,7 @@ initial_investment = st.sidebar.number_input(
     "Initial Investment (₹)",
     min_value=10000,
     max_value=10000000,
-    value=100000,
+    value=10000,
     step=10000
 )
 
